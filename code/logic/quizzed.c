@@ -27,6 +27,22 @@
 #include <string.h>
 #include <stdio.h>
 
+static char* fossil_strdup(const char* s)
+{
+    if(!s) return NULL;
+
+    size_t len = 0;
+    while(s[len]) len++;
+
+    char* out = (char*)malloc(len + 1);
+    if(!out) return NULL;
+
+    for(size_t i=0;i<=len;i++)
+        out[i] = s[i];
+
+    return out;
+}
+
 /* ============================================================
    Internal structures
    ============================================================ */
@@ -83,7 +99,7 @@ static player_state_t* find_player(quiz_t* q,const char* player_id)
     /* create if missing */
     q->players=realloc(q->players,sizeof(player_state_t)*(q->player_count+1));
     player_state_t* p=&q->players[q->player_count++];
-    p->player_id=strdup(player_id);
+    p->player_id=fossil_strdup(player_id);
     p->score=0;
     p->current_question=0;
     return p;
@@ -110,7 +126,7 @@ int fossil_game_quizzed_create(const char* quiz_id)
     quiz_t* q=&g_quizzes[g_quiz_count++];
 
     memset(q,0,sizeof(*q));
-    q->id=strdup(quiz_id);
+    q->id=fossil_strdup(quiz_id);
     return 0;
 }
 
@@ -162,14 +178,14 @@ int fossil_game_quizzed_add_question(
     q->questions=realloc(q->questions,sizeof(question_t)*(q->question_count+1));
     question_t* nq=&q->questions[q->question_count++];
 
-    nq->id=strdup(question_id);
-    nq->text=strdup(question_text);
+    nq->id=fossil_strdup(question_id);
+    nq->text=fossil_strdup(question_text);
     nq->option_count=num_options;
     nq->correct_index=correct_index;
 
     nq->options=malloc(sizeof(char*)*num_options);
     for(int i=0;i<num_options;i++)
-        nq->options[i]=strdup(options[i]);
+        nq->options[i]=fossil_strdup(options[i]);
 
     return 0;
 }
