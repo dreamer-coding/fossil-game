@@ -26,6 +26,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+static char* fossil_strdup(const char* s)
+{
+    if(!s) return NULL;
+
+    size_t len = 0;
+    while(s[len]) len++;
+
+    char* out = (char*)malloc(len + 1);
+    if(!out) return NULL;
+
+    for(size_t i=0;i<=len;i++)
+        out[i] = s[i];
+
+    return out;
+}
+
 /* ============================================================
    Internal Structures
    ============================================================ */
@@ -89,7 +105,7 @@ int fossil_game_player_create(const char* player_id)
     fossil_game_player* p = calloc(1,sizeof(*p));
     if(!p) return -3;
 
-    p->id = strdup(player_id);
+    p->id = fossil_strdup(player_id);
     if(!p->id){ free(p); return -3; }
 
     fossil_game_player** tmp =
@@ -145,7 +161,7 @@ int fossil_game_player_set_attribute(const char* player_id,const char* key,const
     if(!tmp) return -2;
 
     p->attrs=tmp;
-    p->attrs[p->attr_count].key=strdup(key);
+    p->attrs[p->attr_count].key=fossil_strdup(key);
     p->attrs[p->attr_count].value=(void*)value;
     p->attr_count++;
     return 0;
@@ -244,7 +260,7 @@ static int set_control(const char* player_id,const char* name,int enabled)
     if(!tmp) return -2;
 
     p->controls=tmp;
-    p->controls[p->control_count].name=strdup(name);
+    p->controls[p->control_count].name=fossil_strdup(name);
     p->controls[p->control_count].enabled=enabled;
     p->control_count++;
     return 0;
@@ -279,7 +295,7 @@ int fossil_game_player_join_session(const char* player_id,const char* session_id
     if(!p||!session_id) return -1;
 
     free(p->session_id);
-    p->session_id=strdup(session_id);
+    p->session_id=fossil_strdup(session_id);
     return p->session_id?0:-2;
 }
 
