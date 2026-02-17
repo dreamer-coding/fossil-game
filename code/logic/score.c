@@ -26,6 +26,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+static char* fossil_strdup(const char* s)
+{
+    if(!s) return NULL;
+
+    size_t len = 0;
+    while(s[len]) len++;
+
+    char* out = (char*)malloc(len + 1);
+    if(!out) return NULL;
+
+    for(size_t i=0;i<=len;i++)
+        out[i] = s[i];
+
+    return out;
+}
+
 /* ============================================================
    Internal structures
    ============================================================ */
@@ -67,11 +83,39 @@ static player_score_t* find_player(const char* id)
     g_players=realloc(g_players,sizeof(player_score_t)*(g_player_count+1));
     player_score_t* p=&g_players[g_player_count++];
 
-    p->id=strdup(id);
+    p->id=fossil_strdup(id);
     p->score=0;
     p->achievements=NULL;
     p->achievement_count=0;
     return p;
+}
+
+static leaderboard_t* find_board(const char* id)
+{
+    if(!id) id = "global";
+
+    for(int i=0;i<g_board_count;i++)
+        if(strcmp(g_boards[i].id,id)==0)
+            return &g_boards[i];
+
+    /* create new board */
+    g_boards=realloc(g_boards,sizeof(leaderboard_t)*(g_board_count+1));
+    leaderboard_t* b=&g_boards[g_board_count++];
+
+    b->id=fossil_strdup(id);
+    b->players=NULL;
+    b->count=0;
+    return b;
+}
+
+static void board_add_player(leaderboard_t* b,const char* player_id)
+{
+    for(int i=0;i<b->count;i++)
+        if(strcmp(b->players[i],player_id)==0)
+            return;
+
+    b->players=realloc(b->players,sizeof(char*)*(b->count+1));
+    b->players[b->count++]=(char*)player_id; /* reference only */
 }
 
 static int cmp_scores_desc(const void* a,const void* b)
@@ -118,30 +162,41 @@ int fossil_game_score_leaderboard(
     const char*** out_player_ids,
     int* out_count)
 {
-    (void)leaderboard_id; /* currently unused */
-
     if(!out_player_ids||!out_count) return -1;
 
-    if(g_player_count==0){
+    leaderboard_t* board=find_board(leaderboard_id);
+
+    /* If board has no players yet, include everyone automatically */
+    if(board->count==0)
+    {
+        for(int i=0;i<g_player_count;i++)
+            board_add_player(board,g_players[i].id);
+    }
+
+    if(board->count==0){
         *out_player_ids=NULL;
         *out_count=0;
         return 0;
     }
 
-    player_score_t** sorted=malloc(sizeof(player_score_t*)*g_player_count);
-    for(int i=0;i<g_player_count;i++)
-        sorted[i]=&g_players[i];
+    /* build sortable array of player pointers */
+    player_score_t** sorted=malloc(sizeof(player_score_t*)*board->count);
 
-    qsort(sorted,g_player_count,sizeof(player_score_t*),cmp_scores_desc);
+    for(int i=0;i<board->count;i++)
+    {
+        sorted[i]=find_player(board->players[i]);
+    }
 
-    const char** result=malloc(sizeof(char*)*g_player_count);
-    for(int i=0;i<g_player_count;i++)
+    qsort(sorted,board->count,sizeof(player_score_t*),cmp_scores_desc);
+
+    const char** result=malloc(sizeof(char*)*board->count);
+    for(int i=0;i<board->count;i++)
         result[i]=sorted[i]->id;
 
     free(sorted);
 
     *out_player_ids=result;
-    *out_count=g_player_count;
+    *out_count=board->count;
     return 0;
 }
 
