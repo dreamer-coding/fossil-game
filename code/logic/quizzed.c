@@ -273,7 +273,88 @@ int fossil_game_quizzed_reset(const char* quiz_id,const char* player_id)
 }
 
 /* ============================================================
-   AI helpers (stub)
+   Built-in procedural knowledge base
+   ============================================================ */
+
+typedef struct {
+    const char* question;
+    const char* options[4];
+    int correct;
+    int min_difficulty;
+} gen_question_t;
+
+typedef struct {
+    const char* topic;
+    const gen_question_t* questions;
+    int count;
+} gen_category_t;
+
+
+/* ---------- MATH ---------- */
+static const gen_question_t math_bank[]={
+    {"What is 2+2?",{"1","2","4","8"},2,1},
+    {"What is 9*3?",{"12","27","18","21"},1,1},
+    {"What is sqrt(81)?",{"7","8","9","6"},2,2},
+    {"Derivative of x^2?",{"x","2x","x^2","1"},1,3},
+    {"Integral of 1/x?",{"ln(x)","x","1/x","x^2"},0,4}
+};
+
+/* ---------- SCIENCE ---------- */
+static const gen_question_t science_bank[]={
+    {"Water chemical formula?",{"H2O","CO2","NaCl","O2"},0,1},
+    {"Planet known as Red Planet?",{"Earth","Mars","Jupiter","Venus"},1,1},
+    {"Speed of light approx?",{"300 km/s","300,000 km/s","30,000 km/s","3,000 km/s"},1,2},
+    {"Electron charge?",{"Positive","Neutral","Negative","Variable"},2,2},
+    {"DNA shape?",{"Circle","Double helix","Square","Line"},1,1}
+};
+
+/* ---------- HISTORY ---------- */
+static const gen_question_t history_bank[]={
+    {"First US president?",{"Lincoln","Washington","Adams","Jefferson"},1,1},
+    {"Year WWII ended?",{"1940","1945","1950","1939"},1,1},
+    {"Roman numeral for 50?",{"L","V","C","X"},0,1},
+    {"Empire ruled by Julius Caesar?",{"Greek","Roman","Persian","Ottoman"},1,1}
+};
+
+/* ---------- PROGRAMMING ---------- */
+static const gen_question_t prog_bank[]={
+    {"C language creator?",{"Ritchie","Torvalds","Stroustrup","Gosling"},0,1},
+    {"What is malloc used for?",{"IO","Memory alloc","Threads","Math"},1,1},
+    {"Null pointer value?",{"0","1","-1","255"},0,1},
+    {"Keyword for constant in C?",{"let","const","immutable","fixed"},1,1}
+};
+
+/* ---------- FALLBACK GENERAL ---------- */
+static const gen_question_t general_bank[]={
+    {"Which is a fruit?",{"Carrot","Apple","Potato","Onion"},1,1},
+    {"How many days in week?",{"5","6","7","8"},2,1},
+    {"Opposite of hot?",{"Cold","Dry","Wet","Bright"},0,1}
+};
+
+
+/* Category registry */
+static const gen_category_t categories[]={
+    {"math",math_bank,sizeof(math_bank)/sizeof(*math_bank)},
+    {"science",science_bank,sizeof(science_bank)/sizeof(*science_bank)},
+    {"history",history_bank,sizeof(history_bank)/sizeof(*history_bank)},
+    {"programming",prog_bank,sizeof(prog_bank)/sizeof(*prog_bank)},
+    {"general",general_bank,sizeof(general_bank)/sizeof(*general_bank)}
+};
+
+static const gen_category_t* find_category(const char* topic)
+{
+    if(!topic) return &categories[4]; /* general */
+
+    for(size_t i=0;i<sizeof(categories)/sizeof(*categories);i++)
+        if(strcmp(categories[i].topic,topic)==0)
+            return &categories[i];
+
+    return &categories[4];
+}
+
+
+/* ============================================================
+   AI generator (data-driven)
    ============================================================ */
 
 int fossil_game_quizzed_ai_generate(
@@ -284,84 +365,44 @@ int fossil_game_quizzed_ai_generate(
     quiz_t* q=find_quiz(quiz_id);
     if(!q) return -1;
 
-    if(!topic) topic="general";
     if(difficulty<1) difficulty=1;
     if(difficulty>5) difficulty=5;
 
-    /* simple template pools */
-    const char* math_q[]={
-        "What is %d + %d?",
-        "What is %d * %d?",
-        "What is %d - %d?"
-    };
+    const gen_category_t* cat=find_category(topic);
 
-    const char* vocab_q[]={
-        "Which word means '%s'?",
-        "Select the synonym for '%s'."
-    };
+    /* gather eligible questions for difficulty */
+    int pool_count=0;
+    const gen_question_t* pool[64];
 
-    const char* general_q[]={
-        "Which topic does '%s' relate to?",
-        "Pick the best description of '%s'."
-    };
+    for(int i=0;i<cat->count;i++)
+        if(cat->questions[i].min_difficulty<=difficulty)
+            pool[pool_count++]=&cat->questions[i];
 
-    int a=rand()%10 + difficulty*2;
-    int b=rand()%10 + difficulty;
-
-    char text[256];
-    const char* opts[4];
-    char optbuf[4][64];
-
-    int correct=0;
-
-    /* choose template based on topic */
-    if(strcmp(topic,"math")==0)
-    {
-        int t=rand()%3;
-        snprintf(text,sizeof(text),math_q[t],a,b);
-
-        int answer=0;
-        if(t==0) answer=a+b;
-        else if(t==1) answer=a*b;
-        else answer=a-b;
-
-        correct=rand()%4;
-
-        for(int i=0;i<4;i++){
-            int val=answer+(rand()%5-2);
-            if(i==correct) val=answer;
-            snprintf(optbuf[i],64,"%d",val);
-            opts[i]=optbuf[i];
-        }
-    }
-    else if(strcmp(topic,"vocab")==0)
-    {
-        const char* word="rapid";
-        snprintf(text,sizeof(text),vocab_q[rand()%2],word);
-
-        const char* pool[]={"fast","slow","blue","soft"};
-        correct=0;
-        for(int i=0;i<4;i++) opts[i]=pool[i];
-    }
-    else
-    {
-        snprintf(text,sizeof(text),general_q[rand()%2],topic);
-
-        const char* pool[]={"Concept","Animal","Place","Object"};
-        correct=0;
-        for(int i=0;i<4;i++) opts[i]=pool[i];
+    /* fallback if nothing matches */
+    if(pool_count==0){
+        for(int i=0;i<general_bank[0].min_difficulty;i++);
+        for(int i=0;i<(int)(sizeof(general_bank)/sizeof(*general_bank));i++)
+            pool[pool_count++]=&general_bank[i];
     }
 
-    /* build unique question id */
-    char qid[64];
-    snprintf(qid,sizeof(qid),"ai_%s_%d_%d",topic,difficulty,q->question_count);
+    /* pick question */
+    const gen_question_t* gq=pool[rand()%pool_count];
 
-    /* add question to quiz */
+    /* create unique ID using ALL params */
+    char qid[128];
+    snprintf(qid,sizeof(qid),
+             "ai_%s_%s_%d_%d",
+             quiz_id,
+             topic?topic:"general",
+             difficulty,
+             q->question_count);
+
+    /* forward into quiz system */
     return fossil_game_quizzed_add_question(
         quiz_id,
         qid,
-        text,
-        opts,
+        gq->question,
+        gq->options,
         4,
-        correct);
+        gq->correct);
 }
