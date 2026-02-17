@@ -281,9 +281,87 @@ int fossil_game_quizzed_ai_generate(
     const char* topic,
     int difficulty)
 {
-    /* Placeholder — later could hook into Fossil AI */
-    (void)quiz_id;
-    (void)topic;
-    (void)difficulty;
-    return 0;
+    quiz_t* q=find_quiz(quiz_id);
+    if(!q) return -1;
+
+    if(!topic) topic="general";
+    if(difficulty<1) difficulty=1;
+    if(difficulty>5) difficulty=5;
+
+    /* simple template pools */
+    const char* math_q[]={
+        "What is %d + %d?",
+        "What is %d * %d?",
+        "What is %d - %d?"
+    };
+
+    const char* vocab_q[]={
+        "Which word means '%s'?",
+        "Select the synonym for '%s'."
+    };
+
+    const char* general_q[]={
+        "Which topic does '%s' relate to?",
+        "Pick the best description of '%s'."
+    };
+
+    int a=rand()%10 + difficulty*2;
+    int b=rand()%10 + difficulty;
+
+    char text[256];
+    const char* opts[4];
+    char optbuf[4][64];
+
+    int correct=0;
+
+    /* choose template based on topic */
+    if(strcmp(topic,"math")==0)
+    {
+        int t=rand()%3;
+        snprintf(text,sizeof(text),math_q[t],a,b);
+
+        int answer=0;
+        if(t==0) answer=a+b;
+        else if(t==1) answer=a*b;
+        else answer=a-b;
+
+        correct=rand()%4;
+
+        for(int i=0;i<4;i++){
+            int val=answer+(rand()%5-2);
+            if(i==correct) val=answer;
+            snprintf(optbuf[i],64,"%d",val);
+            opts[i]=optbuf[i];
+        }
+    }
+    else if(strcmp(topic,"vocab")==0)
+    {
+        const char* word="rapid";
+        snprintf(text,sizeof(text),vocab_q[rand()%2],word);
+
+        const char* pool[]={"fast","slow","blue","soft"};
+        correct=0;
+        for(int i=0;i<4;i++) opts[i]=pool[i];
+    }
+    else
+    {
+        snprintf(text,sizeof(text),general_q[rand()%2],topic);
+
+        const char* pool[]={"Concept","Animal","Place","Object"};
+        correct=0;
+        for(int i=0;i<4;i++) opts[i]=pool[i];
+    }
+
+    /* build unique question id */
+    char qid[64];
+    snprintf(qid,sizeof(qid),"ai_%s_%d_%d",topic,difficulty,q->question_count);
+
+    /* add question to quiz */
+    return fossil_game_quizzed_add_question(
+        quiz_id,
+        qid,
+        text,
+        opts,
+        4,
+        correct);
 }
