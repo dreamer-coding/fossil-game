@@ -31,60 +31,43 @@ extern "C" {
 
 /* Lifecycle */
 int fossil_game_player_create(const char* player_id);
-int fossil_game_player_remove(const char* player_id);
+int fossil_game_player_destroy(const char* player_id);
 
 /* Attributes */
-int fossil_game_player_set_attribute(const char* player_id,const char* key,const void* value);
-int fossil_game_player_get_attribute(const char* player_id,const char* key,void* out_value);
+int fossil_game_player_set_attr(const char* player_id,const char* key,const char* value);
+const char* fossil_game_player_get_attr(const char* player_id,const char* key);
 
 /* Inventory */
-int fossil_game_player_inventory_add(const char* player_id,const char* item_id,int count);
-int fossil_game_player_inventory_remove(const char* player_id,const char* item_id,int count);
-int fossil_game_player_inventory_list(const char* player_id,const char*** out_items,int* out_count);
+int fossil_game_player_add_item(const char* player_id,const char* item_id);
+int fossil_game_player_remove_item(const char* player_id,const char* item_id);
+int fossil_game_player_has_item(const char* player_id,const char* item_id);
 
-/* Controls */
-int fossil_game_player_enable_control(const char* player_id,const char* control);
-int fossil_game_player_disable_control(const char* player_id,const char* control);
+/* Features */
+int fossil_game_player_enable_feature(const char* player_id,const char* feature);
+int fossil_game_player_disable_feature(const char* player_id,const char* feature);
+int fossil_game_player_has_feature(const char* player_id,const char* feature);
 
-/* NPC / AI */
-int fossil_game_player_npc_update(const char* npc_id);
-
-/* Multiplayer */
+/* Sessions */
 int fossil_game_player_join_session(const char* player_id,const char* session_id);
-int fossil_game_player_leave_session(const char* player_id);
+int fossil_game_player_leave_session(const char* player_id,const char* session_id);
 
 #ifdef __cplusplus
 }
 #endif
 
-
 #ifdef __cplusplus
-#include <vector>
-
 namespace fossil::game {
-
-class Player {
+class player {
     const char* id;
 public:
-    explicit Player(const char* player_id) : id(player_id) {}
-
-    void set_attribute(const char* key,const void* value);
-    void* get_attribute(const char* key);
-
-    void inventory_add(const char* item_id,int count);
-    void inventory_remove(const char* item_id,int count);
-    std::vector<const char*> inventory_list() const;
-
-    void enable_control(const char* control);
-    void disable_control(const char* control);
-
-    void npc_update();
-
-    void join_session(const char* session_id);
-    void leave_session();
+    player(const char* i):id(i){}
+    void set_attr(const char* k,const char* v){ fossil_game_player_set_attr(id,k,v); }
+    const char* get_attr(const char* k)const{ return fossil_game_player_get_attr(id,k); }
+    void add_item(const char* item){ fossil_game_player_add_item(id,item); }
+    void remove_item(const char* item){ fossil_game_player_remove_item(id,item); }
+    void enable_feature(const char* f){ fossil_game_player_enable_feature(id,f); }
 };
-
 }
-
 #endif
+
 #endif
