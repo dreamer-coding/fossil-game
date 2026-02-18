@@ -57,16 +57,16 @@ int fossil_game_player_leave_session(const char* player_id,const char* session_i
 
 #ifdef __cplusplus
 namespace fossil::game {
-class player {
-    const char* id;
-public:
-    player(const char* i):id(i){}
-    void set_attr(const char* k,const char* v){ fossil_game_player_set_attr(id,k,v); }
-    const char* get_attr(const char* k)const{ return fossil_game_player_get_attr(id,k); }
-    void add_item(const char* item){ fossil_game_player_add_item(id,item); }
-    void remove_item(const char* item){ fossil_game_player_remove_item(id,item); }
-    void enable_feature(const char* f){ fossil_game_player_enable_feature(id,f); }
-};
+    class player {
+        const char* id;
+    public:
+        player(const char* i):id(i){}
+        void set_attr(const char* k,const char* v){ fossil_game_player_set_attr(id,k,v); }
+        const char* get_attr(const char* k)const{ return fossil_game_player_get_attr(id,k); }
+        void add_item(const char* item){ fossil_game_player_add_item(id,item); }
+        void remove_item(const char* item){ fossil_game_player_remove_item(id,item); }
+        void enable_feature(const char* f){ fossil_game_player_enable_feature(id,f); }
+    };
 }
 #endif
 
