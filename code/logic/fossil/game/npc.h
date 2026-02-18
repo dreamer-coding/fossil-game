@@ -46,13 +46,13 @@ int fossil_game_npc_speak(const char* npc_id,const char* context);
 
 #ifdef __cplusplus
 namespace fossil::game {
-class npc{
-    const char* id;
-public:
-    npc(const char* i):id(i){}
-    void tick(){ fossil_game_npc_tick(id); }
-    const char* choose_action(){ return fossil_game_npc_choose_action(id); }
-};
+    class npc{
+        const char* id;
+    public:
+        npc(const char* i):id(i){}
+        void tick(){ fossil_game_npc_tick(id); }
+        const char* choose_action(){ return fossil_game_npc_choose_action(id); }
+    };
 }
 #endif
 
