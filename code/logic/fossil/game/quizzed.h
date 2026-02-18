@@ -29,77 +29,42 @@
 extern "C" {
 #endif
 
-/* Quiz lifecycle */
 int fossil_game_quizzed_create(const char* quiz_id);
-int fossil_game_quizzed_remove(const char* quiz_id);
 
-/* Question management */
 int fossil_game_quizzed_add_question(
     const char* quiz_id,
     const char* question_id,
-    const char* question_text,
-    const char** options,
-    int num_options,
-    int correct_index);
+    const char* text);
 
-int fossil_game_quizzed_remove_question(
+int fossil_game_quizzed_add_option(
     const char* quiz_id,
-    const char* question_id);
+    const char* question_id,
+    const char* option_id,
+    const char* text,
+    int correct);
 
-/* Gameplay */
-int fossil_game_quizzed_ask(
-    const char* quiz_id,
-    const char* player_id,
-    char* out_question,
-    int max_len);
+const char* fossil_game_quizzed_ask(const char* quiz_id,const char* player_id);
 
 int fossil_game_quizzed_answer(
     const char* quiz_id,
     const char* player_id,
-    const char* answer);
+    const char* option_id);
 
-/* Scoring */
 int fossil_game_quizzed_score(const char* quiz_id,const char* player_id);
-int fossil_game_quizzed_reset(const char* quiz_id,const char* player_id);
-
-/* AI helpers */
-int fossil_game_quizzed_ai_generate(
-    const char* quiz_id,
-    const char* topic,
-    int difficulty);
 
 #ifdef __cplusplus
 }
 #endif
 
-
 #ifdef __cplusplus
-#include <vector>
-#include <string>
-
 namespace fossil::game {
-
-class Quiz {
+class quizzed{
     const char* id;
 public:
-    explicit Quiz(const char* quiz_id) : id(quiz_id) {}
-
-    void add_question(const char* qid,const char* text,
-                      const std::vector<const char*>& options,
-                      int correct_index);
-
-    void remove_question(const char* qid);
-
-    std::string ask(const char* player_id);
-    bool answer(const char* player_id,const char* answer);
-
-    int score(const char* player_id);
-    void reset(const char* player_id);
-
-    void ai_generate(const char* topic,int difficulty);
+    quizzed(const char* q):id(q){}
+    const char* ask(const char* p){ return fossil_game_quizzed_ask(id,p); }
 };
-
 }
-
 #endif
+
 #endif
