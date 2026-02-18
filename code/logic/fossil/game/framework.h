@@ -27,7 +27,9 @@
 
 // Include the necessary headers
 #include "quizzed.h"
+#include "multiplayer.h"
 #include "player.h"
-#include "score.h"
+#include "clinker.h"
+#include "session.h"
 
 #endif /* FOSSIL_GAME_FRAMEWORK_H */
