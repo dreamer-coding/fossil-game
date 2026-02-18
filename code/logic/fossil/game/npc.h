@@ -22,23 +22,25 @@
  * Copyright (C) 2014-2025 Fossil Logic. All rights reserved.
  * -----------------------------------------------------------------------------
  */
-#ifndef FOSSIL_GAME_NPC_H
-#define FOSSIL_GAME_NPC_H
+#ifndef FOSSIL_GAME_CLINKER_H
+#define FOSSIL_GAME_CLINKER_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int fossil_game_npc_create(const char* npc_id,const char* archetype);
-int fossil_game_npc_destroy(const char* npc_id);
+int fossil_game_clinker_create(const char* npc_id,const char* archetype);
+int fossil_game_clinker_destroy(const char* npc_id);
 
-int fossil_game_npc_set_trait(const char* npc_id,const char* key,const char* value);
-const char* fossil_game_npc_get_trait(const char* npc_id,const char* key);
+/* Traits and AI behaviors */
+int fossil_game_clinker_set_trait(const char* npc_id,const char* key,const char* value);
+const char* fossil_game_clinker_get_trait(const char* npc_id,const char* key);
 
-int fossil_game_npc_tick(const char* npc_id);
-const char* fossil_game_npc_choose_action(const char* npc_id);
+int fossil_game_clinker_tick(const char* npc_id);
+const char* fossil_game_clinker_choose_action(const char* npc_id);
 
-int fossil_game_npc_speak(const char* npc_id,const char* context);
+int fossil_game_clinker_enable_feature(const char* npc_id,const char* feature);
+int fossil_game_clinker_disable_feature(const char* npc_id,const char* feature);
 
 #ifdef __cplusplus
 }
@@ -46,13 +48,15 @@ int fossil_game_npc_speak(const char* npc_id,const char* context);
 
 #ifdef __cplusplus
 namespace fossil::game {
-    class npc{
-        const char* id;
-    public:
-        npc(const char* i):id(i){}
-        void tick(){ fossil_game_npc_tick(id); }
-        const char* choose_action(){ return fossil_game_npc_choose_action(id); }
-    };
+class Clinker {
+    const char* id;
+public:
+    Clinker(const char* i):id(i){}
+    void tick(){ fossil_game_clinker_tick(id); }
+    const char* chooseAction(){ return fossil_game_clinker_choose_action(id); }
+    void enableFeature(const char* f){ fossil_game_clinker_enable_feature(id,f); }
+    void disableFeature(const char* f){ fossil_game_clinker_disable_feature(id,f); }
+};
 }
 #endif
 
