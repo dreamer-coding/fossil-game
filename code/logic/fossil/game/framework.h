@@ -31,5 +31,6 @@
 #include "player.h"
 #include "clinker.h"
 #include "session.h"
+#include "score.h"
 
 #endif /* FOSSIL_GAME_FRAMEWORK_H */
