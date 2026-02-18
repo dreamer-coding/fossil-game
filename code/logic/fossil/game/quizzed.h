@@ -29,27 +29,20 @@
 extern "C" {
 #endif
 
+/* Quiz creation */
 int fossil_game_quizzed_create(const char* quiz_id);
 
-int fossil_game_quizzed_add_question(
-    const char* quiz_id,
-    const char* question_id,
-    const char* text);
+/* Add question (AI generated or manual) */
+int fossil_game_quizzed_add_question(const char* quiz_id,const char* question_id,const char* text);
+int fossil_game_quizzed_add_option(const char* quiz_id,const char* question_id,const char* option_id,const char* text,int correct);
 
-int fossil_game_quizzed_add_option(
-    const char* quiz_id,
-    const char* question_id,
-    const char* option_id,
-    const char* text,
-    int correct);
-
+/* Ask question */
 const char* fossil_game_quizzed_ask(const char* quiz_id,const char* player_id);
 
-int fossil_game_quizzed_answer(
-    const char* quiz_id,
-    const char* player_id,
-    const char* option_id);
+/* Answer question */
+int fossil_game_quizzed_answer(const char* quiz_id,const char* player_id,const char* option_id);
 
+/* Player score */
 int fossil_game_quizzed_score(const char* quiz_id,const char* player_id);
 
 #ifdef __cplusplus
@@ -58,11 +51,13 @@ int fossil_game_quizzed_score(const char* quiz_id,const char* player_id);
 
 #ifdef __cplusplus
 namespace fossil::game {
-class quizzed{
+class Quizzed {
     const char* id;
 public:
-    quizzed(const char* q):id(q){}
-    const char* ask(const char* p){ return fossil_game_quizzed_ask(id,p); }
+    Quizzed(const char* qid):id(qid){}
+    const char* ask(const char* player){ return fossil_game_quizzed_ask(id,player); }
+    void answer(const char* player,const char* option){ fossil_game_quizzed_answer(id,player,option); }
+    int score(const char* player){ return fossil_game_quizzed_score(id,player); }
 };
 }
 #endif
