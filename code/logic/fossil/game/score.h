@@ -22,63 +22,45 @@
  * Copyright (C) 2014-2025 Fossil Logic. All rights reserved.
  * -----------------------------------------------------------------------------
  */
-#ifndef FOSSIL_GAME_SCORE_H
-#define FOSSIL_GAME_SCORE_H
+#ifndef FOSSIL_GAME_SCOREBOARD_H
+#define FOSSIL_GAME_SCOREBOARD_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Score updates */
-int fossil_game_score_update(const char* player_id,int points);
-int fossil_game_score_get(const char* player_id,int* out_points);
-int fossil_game_score_reset(const char* player_id);
+/* Player score submission */
+int fossil_game_scoreboard_submit(const char* board_id,const char* player_id,int score);
 
-/* Leaderboards */
-int fossil_game_score_leaderboard(
-    const char* leaderboard_id,
-    const char*** out_player_ids,
-    int* out_count);
+/* Query score */
+int fossil_game_scoreboard_get(const char* board_id,const char* player_id,int* out);
 
-/* Matchmaking */
-int fossil_game_score_matchmaking(
-    const char* player_id,
-    char*** out_opponents,
-    int* out_count);
+/* Ranking */
+int fossil_game_scoreboard_rank(const char* board_id,const char* player_id,int* out);
 
-/* Achievements */
-int fossil_game_score_add_achievement(
-    const char* player_id,
-    const char* achievement_id);
+/* Leaderboard */
+const char* fossil_game_scoreboard_leaderboard(const char* board_id);
 
-int fossil_game_score_has_achievement(
-    const char* player_id,
-    const char* achievement_id);
+/* AI matchmaking */
+const char* fossil_game_scoreboard_matchmake(const char* board_id,const char* player_id);
 
 #ifdef __cplusplus
 }
 #endif
 
-
 #ifdef __cplusplus
-#include <vector>
-
 namespace fossil::game {
-
-class Score {
+class Scoreboard {
+    const char* id;
 public:
-    void update(const char* player_id,int points);
-    int get(const char* player_id);
-    void reset(const char* player_id);
-
-    std::vector<const char*> leaderboard(const char* leaderboard_id);
-    std::vector<const char*> matchmaking(const char* player_id);
-
-    void add_achievement(const char* player_id,const char* achievement_id);
-    bool has_achievement(const char* player_id,const char* achievement_id);
+    Scoreboard(const char* i):id(i){}
+    void submit(const char* p,int s){ fossil_game_scoreboard_submit(id,p,s); }
+    int get(const char* p){ int out=0; fossil_game_scoreboard_get(id,p,&out); return out; }
+    int rank(const char* p){ int r=0; fossil_game_scoreboard_rank(id,p,&r); return r; }
+    const char* leaderboard(){ return fossil_game_scoreboard_leaderboard(id); }
+    const char* matchmake(const char* p){ return fossil_game_scoreboard_matchmake(id,p); }
 };
-
 }
-
 #endif
+
 #endif
